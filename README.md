@@ -16,14 +16,6 @@ The project includes data preprocessing, synthetic error generation, model train
     *   [Synthetic Misspelling Generation](#synthetic-misspelling-generation)
 5.  [Setup and Installation](#setup-and-installation)
     *   [Prerequisites](#prerequisites)
-    *   [Dependencies](#dependencies)
-    *   [Data Preparation](#data-preparation)
-6.  [Usage](#usage)
-7.  [Code Structure Highlights](#code-structure-highlights)
-8.  [Evaluation Metrics](#evaluation-metrics)
-9.  [Results Summary](#results-summary)
-10. [Example Inferences](#example-inferences)
-11. [Potential Future Work](#potential-future-work)
 
 ## Project Overview
 The primary goal is to build effective spelling correction systems. This is achieved by:
@@ -72,79 +64,3 @@ This process creates paired datasets of (misspelled sentence, correct sentence) 
 *   Python (3.7+ recommended)
 *   pip (Python package installer)
 *   (Optional but recommended for GPU) NVIDIA GPU with CUDA and cuDNN installed for TensorFlow.
-
-### Dependencies
-The project relies on several Python libraries. You can install them using pip:
-```bash
-pip install datasets jiwer transformers tensorflow pandas numpy nltk
-
-Or create a requirements.txt file:
-datasets
-jiwer
-transformers
-tensorflow>=2.10  # Or a version compatible with your setup
-pandas
-numpy
-nltk
-
-And install with:
-pip install -r requirements.txt
-
-The NLTK punkt tokenizer is also required and will be downloaded by the script if not found.
-Data Preparation
-Create a directory named data in your project's root or /content/data/ if running in Colab.
-Place your source TSV files (tune.tsv, validation.tsv, test.tsv) into this data directory. Each file should contain one correct sentence per line, primarily in the first column.
-Usage
-Ensure all dependencies are installed and the data is prepared as described above.
-Open and run the Jupyter Notebook cells sequentially.
-The notebook will first load the source sentences.
-Then, it will generate misspelled data for training, validation, and testing.
-It proceeds to train and evaluate the T5 model.
-Following that, it trains and evaluates the BART-base model.
-Finally, it fine-tunes and evaluates the pre-trained oliverguhr BART model.
-Observe the training progress, evaluation metrics, and inference examples printed in the notebook.
-The trained T5 model and its tokenizer will be saved to ./my_spell_corrector_t5_small.
-Code Structure Highlights
-Data Loading & Initial Cleaning (Pages 3-4):
-load_sentences_from_tsv(): Loads sentences from TSV files.
-remove_punctuation_and_digits(): Basic text cleaning.
-Synthetic Error Generation (Pages 4-6):
-introduce_char_deletion(), introduce_char_insertion(), introduce_char_substitution(), introduce_char_transposition(): Functions for individual error types.
-generate_misspelled_sentence_random_errors(): Applies random errors to a sentence.
-create_paired_dataset(): Generates the full (misspelled, correct) dataset.
-Model-Specific Preprocessing (Pages 9, 21, 29):
-preprocess_function(): Tokenizes input (misspelled) and target (correct) sentences for T5/BART, handles padding, truncation, and formats labels (using -100 for padding tokens).
-TensorFlow Dataset Conversion (Pages 10-11, 23-24):
-to_tf_dataset(): Converts Hugging Face Dataset objects to tf.data.Dataset for efficient training.
-Model Training (Pages 12-13, 25, 32-33):
-Initialization of TFT5ForConditionalGeneration or TFBartForConditionalGeneration.
-Compilation with an optimizer (e.g., AdamW).
-Training using model.fit() with EarlyStopping callback.
-Evaluation (Pages 13-17, 26, 33-34):
-compute_metrics(): Calculates WER and CER by generating predictions on a dataset and comparing with references. Also computes Exact-Match Accuracy for T5.
-Inference (Pages 18-20, 27-29, 34-37):
-correct_sentences_in_batch() / predict_spelling_single_string(): Functions to perform inference on new misspelled text using the trained models.
-Evaluation Metrics
-Word Error Rate (WER): The number of word substitutions, deletions, and insertions required to transform the predicted sentence into the reference sentence, divided by the number of words in the reference. Lower is better.
-Character Error Rate (CER): Similar to WER, but calculated at the character level. Lower is better.
-Exact-Match Accuracy (for T5): The percentage of predicted sentences that exactly match the reference sentences. Higher is better.
-
-Observations:
-The BART models significantly outperformed T5-small on WER and CER.
-Further fine-tuning the already specialized oliverguhr/spelling-correction-english-base model yielded the best results, demonstrating the benefit of transfer learning from a task-relevant checkpoint.
-Example Inferences
-The notebook provides several examples of misspelled inputs and their corrected outputs from each model.
-Example (T5-small):
-Input Misspelled: I have a qestion abot ths assignent
-Corrected Output: I have a qestion abot the assigned
-Example (Fine-tuned oliverguhr BART):
-Input Misspelled: Whre are you giong
-Corrected Output: Where are you going
-Potential Future Work
-Real-World Misspelled Data: Train and evaluate on datasets containing naturally occurring spelling errors instead of purely synthetic ones.
-Larger Models: Experiment with larger T5 or BART variants (e.g., t5-base, bart-large) for potentially better performance, at the cost of increased computational resources.
-Advanced Error Generation: Implement more sophisticated synthetic error models that better mimic human typographical patterns.
-Hyperparameter Optimization: Conduct a more thorough search for optimal learning rates, batch sizes, number of training epochs, etc.
-Beam Search Variations: Explore different num_beams and other generation parameters during inference.
-Contextual Spelling Correction: For errors that are context-dependent (e.g., homophones), the current character-level approach might be limited. More advanced techniques might be needed.
-Deployment: Package the best performing model into a simple application or API.
